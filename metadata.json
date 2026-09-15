@@ -2,6 +2,7 @@
   "name": "ATS Resume Builder & Scanner",
   "description": "Production-ready ATS-friendly resume builder and scanner with real-time scoring, AI enhancement, multi-format parsing, and PDF exports.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
-
