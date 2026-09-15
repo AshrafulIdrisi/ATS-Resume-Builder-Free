@@ -1,15 +1,26 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-export async function exportResumeToPdf(elementId: string, filename: string = 'Resume.pdf'): Promise<void> {
-  const element = document.getElementById(elementId);
+export async function exportResumeToPdf(
+  elementId: string = 'resume-printable-document',
+  filename: string = 'Resume.pdf'
+): Promise<void> {
+  // Robust element resolution
+  let element: HTMLElement | null = document.getElementById(elementId);
+  if (!element) {
+    element = document.getElementById('resume-printable-document') ||
+              document.getElementById('ats-resume-preview-sheet') ||
+              document.querySelector<HTMLElement>('[data-testid="ats-resume-preview-sheet"]') ||
+              document.querySelector<HTMLElement>('.w-\\[210mm\\]');
+  }
+
   if (!element) {
     throw new Error(`Resume preview element with id "${elementId}" not found.`);
   }
 
   // Create high-resolution canvas from the preview container
   const canvas = await html2canvas(element, {
-    scale: 2.5, // Crisp rendering
+    scale: 2.5, // Crisp rendering for ATS text & fonts
     useCORS: true,
     logging: false,
     backgroundColor: '#ffffff',
@@ -52,3 +63,4 @@ export async function exportResumeToPdf(elementId: string, filename: string = 'R
 export function triggerNativePrint(): void {
   window.print();
 }
+

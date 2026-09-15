@@ -15,24 +15,37 @@ import {
   AlertCircle,
   FileText
 } from 'lucide-react';
-import { ResumeData } from '../types';
+import { ResumeData, AtsAuditResult } from '../types';
 import { detectActionVerb } from '../utils/actionVerbs';
 
 interface ResumePreviewProps {
   resume: ResumeData;
+  audit?: AtsAuditResult;
   zoom?: number;
   onZoomChange?: (zoom: number) => void;
   showInspector?: boolean;
+  inspectorMode?: boolean;
   onToggleInspector?: () => void;
+  onOpenJobMatcher?: () => void;
+  onOpenRecruiterAudit?: () => void;
 }
 
 export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({
   resume,
-  zoom = 100,
+  audit,
+  zoom: controlledZoom,
   onZoomChange,
-  showInspector = false,
-  onToggleInspector
+  showInspector: controlledShowInspector,
+  inspectorMode,
+  onToggleInspector,
+  onOpenJobMatcher,
+  onOpenRecruiterAudit
 }, ref) => {
+  const [internalZoom, setInternalZoom] = useState(100);
+  const zoom = controlledZoom !== undefined ? controlledZoom : internalZoom;
+  const handleZoomChange = onZoomChange || setInternalZoom;
+
+  const showInspector = controlledShowInspector !== undefined ? controlledShowInspector : (inspectorMode || false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const theme = resume.theme || {
@@ -153,31 +166,29 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({
           )}
 
           {/* Zoom Controls */}
-          {onZoomChange && (
-            <div className="flex items-center bg-slate-100 rounded-md p-0.5 border border-slate-200">
-              <button
-                type="button"
-                onClick={() => onZoomChange(Math.max(50, zoom - 15))}
-                disabled={zoom <= 50}
-                className="p-1 hover:bg-white text-slate-600 hover:text-slate-900 rounded disabled:opacity-40 transition"
-                title="Zoom Out"
-              >
-                <ZoomOut className="w-3.5 h-3.5" />
-              </button>
-              <span className="text-xs font-mono font-medium px-2 text-slate-700 select-none min-w-[3rem] text-center">
-                {zoom}%
-              </span>
-              <button
-                type="button"
-                onClick={() => onZoomChange(Math.min(150, zoom + 15))}
-                disabled={zoom >= 150}
-                className="p-1 hover:bg-white text-slate-600 hover:text-slate-900 rounded disabled:opacity-40 transition"
-                title="Zoom In"
-              >
-                <ZoomIn className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
+          <div className="flex items-center bg-slate-100 rounded-md p-0.5 border border-slate-200">
+            <button
+              type="button"
+              onClick={() => handleZoomChange(Math.max(50, zoom - 15))}
+              disabled={zoom <= 50}
+              className="p-1 hover:bg-white text-slate-600 hover:text-slate-900 rounded disabled:opacity-40 transition"
+              title="Zoom Out"
+            >
+              <ZoomOut className="w-3.5 h-3.5" />
+            </button>
+            <span className="text-xs font-mono font-medium px-2 text-slate-700 select-none min-w-[3rem] text-center">
+              {zoom}%
+            </span>
+            <button
+              type="button"
+              onClick={() => handleZoomChange(Math.min(150, zoom + 15))}
+              disabled={zoom >= 150}
+              className="p-1 hover:bg-white text-slate-600 hover:text-slate-900 rounded disabled:opacity-40 transition"
+              title="Zoom In"
+            >
+              <ZoomIn className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
           {/* Fullscreen Toggle */}
           <button
@@ -223,7 +234,8 @@ export const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({
           {/* A4 Sheet Container */}
           <div
             ref={ref}
-            id="ats-resume-preview-sheet"
+            id="resume-printable-document"
+            data-testid="ats-resume-preview-sheet"
             className={`w-[210mm] min-h-[297mm] bg-white text-slate-900 shadow-xl border border-slate-300 print:border-none print:shadow-none print:w-full print:min-h-0 ${currentFont} ${currentMargin} ${currentFontSize.base} ${currentSpacing.lineSpacing}`}
           >
             {/* Header Section */}

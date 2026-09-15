@@ -286,36 +286,47 @@ export default function App() {
         {/* Workspace Split Layout */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           {/* Left Panel: Form Editor */}
-          {(viewMode === 'split' || viewMode === 'editor') && (
-            <div className={`space-y-4 ${
-              viewMode === 'editor' ? 'lg:col-span-12 max-w-4xl mx-auto w-full' : 'lg:col-span-6'
-            }`}>
-              <ResumeEditor
-                resume={resume}
-                onChange={setResume}
-                onEnhanceBullet={openBulletEnhancer}
-                onGenerateSummary={openSummaryGenerator}
-                onOpenTemplateGallery={() => setIsTemplateGalleryOpen(true)}
-              />
-            </div>
-          )}
+          <div className={`space-y-4 ${
+            viewMode === 'editor' 
+              ? 'lg:col-span-12 max-w-4xl mx-auto w-full' 
+              : viewMode === 'preview' 
+                ? 'hidden' 
+                : 'lg:col-span-6'
+          }`}>
+            <ResumeEditor
+              resume={resume}
+              onChange={setResume}
+              onEnhanceBullet={openBulletEnhancer}
+              onGenerateSummary={openSummaryGenerator}
+              onOpenTemplateGallery={() => setIsTemplateGalleryOpen(true)}
+            />
+          </div>
 
           {/* Right Panel: Live Document Preview */}
-          {(viewMode === 'split' || viewMode === 'preview') && (
-            <div className={`space-y-4 ${
-              viewMode === 'preview' ? 'lg:col-span-12 max-w-4xl mx-auto w-full' : 'lg:col-span-6'
-            } sticky top-20`}>
-              <ResumePreview
-                resume={resume}
-                audit={atsAudit}
-                inspectorMode={inspectorMode}
-                onToggleInspector={() => setInspectorMode(!inspectorMode)}
-                onOpenJobMatcher={() => setIsJobMatcherOpen(true)}
-                onOpenRecruiterAudit={openRecruiterAudit}
-              />
-            </div>
-          )}
+          <div className={`space-y-4 ${
+            viewMode === 'preview' 
+              ? 'lg:col-span-12 max-w-4xl mx-auto w-full' 
+              : viewMode === 'editor' 
+                ? 'hidden' 
+                : 'lg:col-span-6'
+          } sticky top-20`}>
+            <ResumePreview
+              resume={resume}
+              audit={atsAudit}
+              inspectorMode={inspectorMode}
+              onToggleInspector={() => setInspectorMode(!inspectorMode)}
+              onOpenJobMatcher={() => setIsJobMatcherOpen(true)}
+              onOpenRecruiterAudit={openRecruiterAudit}
+            />
+          </div>
         </div>
+
+        {/* Offscreen / Print Standby Container to ensure PDF and Print always find #resume-printable-document even in editor-only view */}
+        {viewMode === 'editor' && (
+          <div className="fixed -left-[9999px] -top-[9999px] opacity-0 pointer-events-none" aria-hidden="true">
+            <ResumePreview resume={resume} />
+          </div>
+        )}
       </main>
 
       {/* Floating Toast Notification */}
