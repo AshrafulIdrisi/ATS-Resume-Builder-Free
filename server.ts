@@ -1,9 +1,9 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from '@google/genai';
-import { createServer as createViteServer } from 'vite';
 
 dotenv.config();
 
@@ -619,25 +619,37 @@ Return structured JSON.`;
   }
 });
 
-// Vite middleware setup
+// Vite middleware setup and production static server
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    // Resolve dist folder whether running from workspace root or dist directory
+    const cwdDist = path.join(process.cwd(), 'dist');
+    const distPath = fs.existsSync(cwdDist) ? cwdDist : __dirname;
+
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      const indexPath = path.join(distPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(404).send('Application build not found.');
+      }
     });
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`ATS Resume Builder Server running on http://0.0.0.0:${PORT}`);
+    console.log(`ATS Resume Builder Server listening on http://0.0.0.0:${PORT} (NODE_ENV: ${process.env.NODE_ENV || 'development'})`);
   });
 }
 
-startServer();
+startServer().catch((err) => {
+  console.error('Fatal error during server startup:', err);
+  process.exit(1);
+});
