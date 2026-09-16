@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 
 export async function exportResumeToPdf(
   elementId: string = 'resume-printable-document',
@@ -18,17 +18,23 @@ export async function exportResumeToPdf(
     throw new Error(`Resume preview element with id "${elementId}" not found.`);
   }
 
-  // Create high-resolution canvas from the preview container
-  const canvas = await html2canvas(element, {
-    scale: 2.5, // Crisp rendering for ATS text & fonts
-    useCORS: true,
-    logging: false,
+  // Create high-resolution image using html-to-image which natively supports CSS oklch/modern colors
+  // Set skipFonts: true to prevent CORS security errors when inspecting external Google Fonts stylesheets
+  const imgData = await toPng(element, {
+    pixelRatio: 2.5, // Crisp rendering for ATS typography & layout
     backgroundColor: '#ffffff',
-    windowWidth: 1200
+    cacheBust: true,
+    skipFonts: true,
   });
 
-  const imgData = canvas.toDataURL('image/png', 1.0);
-  
+  // Calculate dimensions from generated image
+  const img = new Image();
+  img.src = imgData;
+  await new Promise((resolve, reject) => {
+    img.onload = resolve;
+    img.onerror = reject;
+  });
+
   // A4 dimensions in mm: 210 x 297
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -40,7 +46,7 @@ export async function exportResumeToPdf(
   const pdfHeight = 297;
   
   const imgWidth = pdfWidth;
-  const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+  const imgHeight = (img.height * pdfWidth) / img.width;
 
   let heightLeft = imgHeight;
   let position = 0;
@@ -63,4 +69,5 @@ export async function exportResumeToPdf(
 export function triggerNativePrint(): void {
   window.print();
 }
+
 

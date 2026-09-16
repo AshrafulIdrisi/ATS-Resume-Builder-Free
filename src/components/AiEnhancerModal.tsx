@@ -128,14 +128,28 @@ export function AiEnhancerModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          resume: resume,
           resumeData: resume,
           targetRole: roleInput || resume.contact.jobTitle
         })
       });
 
-      if (!res.ok) throw new Error('Recruiter audit failed.');
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || errJson.details || 'Recruiter audit service temporarily unavailable.');
+      }
       const data = await res.json();
-      setAuditFeedback(data.auditFeedback);
+      if (data.auditFeedback) {
+        setAuditFeedback(data.auditFeedback);
+      } else if (data.recruiterVerdict) {
+        const report = [
+          `🏆 EXECUTIVE VERDICT:\n${data.recruiterVerdict}`,
+          `\n✨ TOP STRENGTHS:\n${(data.strengths || []).map((s: string) => `• ${s}`).join('\n')}`,
+          `\n⚠️ ATS RED FLAGS:\n${(data.redFlags || []).map((f: string) => `• ${f}`).join('\n')}`,
+          `\n🎯 PRIORITY ACTION ITEMS:\n${(data.priorityActionItems || []).map((a: string) => `• ${a}`).join('\n')}`
+        ].join('\n');
+        setAuditFeedback(report);
+      }
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Failed to generate recruiter audit.');
