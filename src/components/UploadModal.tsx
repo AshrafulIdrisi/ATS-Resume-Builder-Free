@@ -97,13 +97,18 @@ export function UploadModal({
         return;
       }
 
-      // If PDF/DOCX/TXT: call Gemini AI backend to structure raw text
-      setStatusMessage('Extracting text and analyzing structure with Gemini AI...');
+      // If PDF/DOCX/TXT/Image: call Gemini AI backend to structure resume content
+      setStatusMessage('Extracting document layout and structuring fields with Gemini AI...');
 
       const response = await fetch('/api/parse-resume', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rawText: parsedResult.rawText })
+        body: JSON.stringify({
+          rawText: parsedResult.rawText,
+          base64Data: parsedResult.base64Data,
+          mimeType: parsedResult.mimeType,
+          filename: parsedResult.filename || uploadedFile.name
+        })
       });
 
       if (!response.ok) {
